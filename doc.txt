@@ -1,6 +1,6 @@
 # recfsusb2n   for Linux OSes
 instructions, usage, FAQ
-2016-02-11
+2017-01-22
 
 
 # Setup device configuration
@@ -28,16 +28,17 @@ Apply "udev.rules" changes
 
 # usage "recfsusb2n"
 
-recfsusb2i [-v] CHANNEL RECSEC DESTFILE
+recfsusb2n [-v] [--b25] [--tsid n] [--sid n1,n2,...] channel recsec destfile
 
-CHANNEL   : (int) 13-62 = UHF ch., 101- = BS ch., 201- = CS ch., 60000- = kHz
-RECSEC    : (int) record duration (second)   "-", 0, or negative number = non-stop (until SIGTERM, Ctrl + c)
-DESTFILE  : TS output file,  "-" = stdout
+channel   : (int) 13-62 = UHF ch., 101- = BS ch., 201- = CS ch., 60000- = kHz
+recsec    : (int) record duration (second)   "-", 0, or negative number = non-stop (until SIGTERM, Ctrl + c)
+destfile  : TS output file,  "-" = stdout
 
 Options:
   -v	: verbose (init message, signal status)
  --b25	: enable descrambling (STD-B25)
  --tsid	: TS ID (BS/CS)
+ --sid	: SID
 
 
 
@@ -52,14 +53,14 @@ See description of CONFIG_USB_DEVICEFS
 
 
 
-## How to use libarib25 (STD-B25 interface library) ?
+## How to use libaribb25 (STD-B25 interface library) ?
 
-You can get libarib25 (linux ver.) from GitHub or anywhere.
+You can get libaribb25 (linux ver.) from GitHub or anywhere.
 Make a shared library file. Put the following files in "/usr/local/*"
 
 /usr/local/lib/
-	libarib25.so
-/usr/local/include/arib25/
+	libaribb25.so
+/usr/local/include/aribb25/
 	arib_std_b25.h
 	b_cas_card.h
 	portable.h

@@ -1,7 +1,8 @@
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA256
-
 # ChangeLog  recfsusb2n
+
+0.1.13	2017-01-22
+	Added: set SID
+
 
 0.1.12	2016-02-11
 	first release
@@ -31,14 +32,3 @@ Hash: SHA256
 
 ## End
 signed by "trinity19683.gpg-pub" 2015-12-13
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQEcBAEBCAAGBQJWu7FHAAoJEB0tpC02lUUY3ykIAIpQSKE9UayXJrnNbFEXIlkK
-kZijPJOirL1Or0iykkX+M9y1jJEgOE8v1udc/hZoxZ0kheMHNHI4bN3974AOcGzd
-F4qOhlf+1oXo04yWOky8ByD7jQoEUV/OS6gNiSNmP8zj5mxPDHlCqHMYbE2XAiLE
-+N6RYE+NtQtSg+pF4inBQQdeCnK++LZE3UP8Gi5+5eVaHnzxe9vIOF9/372e3RGk
-bPMlQ+ZgCzajNUfSazhZsbU96c8Wn/KJ8wHE/VKciZLN8+SciSfq/0p5N39jZSoe
-oip9VfNt139oxcHj847gnULPNhvJrGrZUojvI4JgJSVusc06KeZ3NpYX6jJUgTY=
-=sMFj
------END PGP SIGNATURE-----
