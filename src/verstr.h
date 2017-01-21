@@ -4,8 +4,8 @@
   2001-07-25
 */
 #pragma once
-#define PRG_VER  "0.1.12"
+#define PRG_VER  "0.1.13"
 #define PRG_BUILT  "beta"
 //# dev beta release
-#define PRG_TIMESTAMP  "20160211_0602"
+#define PRG_TIMESTAMP  "20170122_0026"
 /*EOF*/

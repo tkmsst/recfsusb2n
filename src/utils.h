@@ -13,6 +13,8 @@ struct Args {
 	unsigned int freq;
 	unsigned int ts_id;
 	unsigned int recsec;
+	unsigned int splitter;
+	char sid_list[32];
 	char* devfile;
 	char* destfile;
 };

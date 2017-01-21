@@ -1,11 +1,12 @@
 CC	= gcc
-CFLAGS	= -DDEBUG -O2 -Wall
-OBJS	= main.o utils.o message.o osdepend.o usbdevfile.o usbops.o tsthread.o em287x.o em287x_usb.o tc90522.o mxl136.o tda20142.o
+CFLAGS	= -O2 -Wall
+OBJS	= main.o utils.o message.o osdepend.o usbdevfile.o usbops.o tsthread.o em287x.o em287x_usb.o tc90522.o mxl136.o tda20142.o tssplitter_lite.o
 LIBS	= -lpthread
 TARGET	= recfsusb2n
+PREFIX = /usr/local
 
 ifdef B25
-LIBS	+= -larib25
+LIBS	+= -laribb25
 CFLAGS_utils	+= -DSTD_B25
 endif
 ifeq ($(shell getconf LONG_BIT),32)
@@ -17,6 +18,12 @@ all: $(TARGET)
 clean:
 	rm -f $(OBJS) $(TARGET)
 
+uninstall:
+	rm -vf $(PREFIX)/bin/$(TARGET)
+
+install: uninstall
+	install -m 755 $(TARGET) $(PREFIX)/bin
+
 $(TARGET): $(OBJS)
 	$(CC) -o $(TARGET) $(OBJS) $(LIBS)
 
@@ -27,4 +34,3 @@ depend:
 
 utils.o :
 	$(CC) $(CFLAGS) $(CFLAGS_utils) -c -o $@ $(@:.o=.c)
-

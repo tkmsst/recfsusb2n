@@ -14,24 +14,40 @@
 #include "utils.h"
 #include "message.h"
 
+#include "decoder.h"
+#include "tssplitter_lite.h"
+
+struct Args* args;
+splitter* sp;
+splitbuf_t splitbuf;
+int split_select_finish;
+
 static void usage(const char *argv0)
 {
 	msg("Usage: %s", argv0);
-	msg(" [-v] CHANNEL RECSEC DESTFILE\n");
+	msg(" [-v]");
+#ifdef STD_B25
+	msg(" [--b25]");
+#endif
+	msg(" [--tsid n] [--sid n1,n2,...] channel recsec destfile\n");
 	exit(1);
 }
 
-void parseOption(int argc, char * const argv[], struct Args* args)
+void parseOption(int argc, char * const argv[], struct Args* p_args)
 {
 	int c;
 	char *ptr;
+	args = p_args;
 	memset(args, 0, sizeof(struct Args));
 	for(;;) {
 		int option_index = 0;
 		static struct option long_options[] = {
 			{"dev", required_argument, NULL, 260},
 			{"tsid", required_argument, NULL, 300},
+			{"sid", required_argument, NULL, 400},
+#ifdef STD_B25
 			{"b25", no_argument, NULL, 500},
+#endif
 			{0, 0, 0, 0}
 		};
 		c = getopt_long(argc, argv, "v", long_options, &option_index);
@@ -52,9 +68,17 @@ void parseOption(int argc, char * const argv[], struct Args* args)
 				}
 			}
 			break;
-		case 500:   //# disable descrambling (STD-B25)
+		case 400:   //# SID
+			if( optarg ) {
+				args->splitter = 1;
+				strncpy( args->sid_list, optarg, 31);
+			}
+			break;
+#ifdef STD_B25
+		case 500:   //# enable descrambling (STD-B25)
 			args->flags |= 0x1000;
 			break;
+#endif
 		}
 	}
 
@@ -242,8 +266,8 @@ struct OutputBuffer* create_FileBufferedWriter(unsigned  bufSize, const char* co
 }
 
 #ifdef STD_B25
-#include <arib25/arib_std_b25.h>
-#include <arib25/b_cas_card.h>
+#include <aribb25/arib_std_b25.h>
+#include <aribb25/b_cas_card.h>
 #endif
 
 #define TS_PACKET_SIZE  188
@@ -258,13 +282,17 @@ struct TSParser_Data {
 
 static int TSParser_release(struct OutputBuffer* const  pThis)
 {
-	struct TSParser_Data* const  prv = (struct TSParser_Data*)(pThis + 1);
 #ifdef STD_B25
+	struct TSParser_Data* const  prv = (struct TSParser_Data*)(pThis + 1);
 	if( prv->b25 )
 		prv->b25->release( prv->b25 );
 	if( prv->b25cas )
 		prv->b25cas->release( prv->b25cas );
 #endif
+	if( splitbuf.buffer )
+		free( splitbuf.buffer );
+	if( sp )
+		split_shutdown(sp);
 	return 0;
 }
 
@@ -321,6 +349,52 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 			}
 		}
 #endif
+		/* Split */
+		if (args->splitter) {
+			ARIB_STD_B25_BUFFER	ubuf;
+			int code = TSS_SUCCESS;
+
+			splitbuf.size = 0;
+			if( splitbuf.allocation_size < length ){
+				free( splitbuf.buffer );
+				splitbuf.buffer = (u_char *)malloc( length );
+				splitbuf.allocation_size = length;
+			}
+			ubuf.size = length;
+			ubuf.data = ptr;
+
+			/* 分離対象PIDの抽出 */
+			if(split_select_finish != TSS_SUCCESS) {
+				split_select_finish = split_select(sp, &ubuf);
+				if(split_select_finish == TSS_NULL) {
+					/* mallocエラー発生 */
+					warn_msg(0,"split_select malloc failed");
+					args->splitter = 0;
+					length = ubuf.size;
+					ptr = ubuf.data;
+					free( splitbuf.buffer );
+					splitbuf.buffer = NULL;
+					split_shutdown(sp);
+					goto fin;
+				}
+				else if(split_select_finish != TSS_SUCCESS) {
+					ubuf.size = 0;
+					goto fin;
+				}
+			}
+			// 分離対象以外をふるい落とす
+			code = split_ts(sp, &ubuf, &splitbuf);
+			if(code == TSS_NULL) {
+				msg("PMT reading..");
+			}
+			else if(code != TSS_SUCCESS) {
+				warn_msg(0,"split_ts failed");
+			}
+
+			length = splitbuf.size;
+			ptr = splitbuf.buffer;
+fin:;
+		}
 		r = OutputBuffer_put(pThis->pOutput, ptr, length);
 		if(0 > r)  return r;
 	}
@@ -370,11 +444,6 @@ static void init_STD_B25(ARIB_STD_B25 ** const  pB25, B_CAS_CARD ** const  pB25c
 	r = bc->get_id(bc, &casID);
 	if(r < 0) {
 		warn_msg(r,"Get CAS ID failed");
-	}else{
-		for(r = 0; r < casID.count; r++) {
-			const uint64_t  val = casID.data[r];
-			dmsgn("%u%014llu, ", (val >> 45) & 0x7,val & ((1ULL << 45) - 1));
-		}
 	}
 	msg(" done.\n");
 	return;
@@ -416,6 +485,18 @@ struct OutputBuffer* create_TSParser(unsigned  bufSize, struct OutputBuffer* con
 		prv->b25cas = NULL;
 	}
 #endif
+	/* initialize splitter */
+	if(args->splitter) {
+		sp = split_startup(args->sid_list);
+		if(sp != NULL) {
+			splitbuf.buffer = (u_char *)malloc( LENGTH_SPLIT_BUFFER );
+			splitbuf.allocation_size = LENGTH_SPLIT_BUFFER;
+			split_select_finish = TSS_ERROR;
+		}else{
+			args->splitter = 0;
+			warn_msg(0,"Cannot start TS splitter.");
+		}
+	}
 	return pThis;
 }
 

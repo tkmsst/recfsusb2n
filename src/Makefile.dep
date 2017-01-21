@@ -1,6 +1,6 @@
 main.o: main.c usbdevfile.h types_u.h em287x.h tc90522.h mxl136.h \
  tda20142.h tsthread.h utils.h verstr.h message.h
-utils.o: utils.c utils.h message.h
+utils.o: utils.c utils.h message.h decoder.h tssplitter_lite.h
 message.o: message.c message.h
 osdepend.o: osdepend.c osdepend.h types_u.h
 usbdevfile.o: usbdevfile.c usbdevfile.h types_u.h message.h
@@ -14,3 +14,4 @@ em287x_usb.o: em287x_usb.c osdepend.h types_u.h em287x_usb.h \
 tc90522.o: tc90522.c osdepend.h types_u.h tc90522.h message.h
 mxl136.o: mxl136.c osdepend.h types_u.h mxl136.h message.h
 tda20142.o: tda20142.c osdepend.h types_u.h tda20142.h message.h
+tssplitter_lite.o: tssplitter_lite.c tssplitter_lite.h
