@@ -31,7 +31,7 @@ void parseOption(int argc, char * const argv[], struct Args* args)
 		static struct option long_options[] = {
 			{"dev", required_argument, NULL, 260},
 			{"tsid", required_argument, NULL, 300},
-			{"nd", no_argument, NULL, 500},
+			{"b25", no_argument, NULL, 500},
 			{0, 0, 0, 0}
 		};
 		c = getopt_long(argc, argv, "v", long_options, &option_index);

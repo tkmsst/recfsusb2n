@@ -36,7 +36,7 @@ DESTFILE  : TS output file,  "-" = stdout
 
 Options:
   -v	: verbose (init message, signal status)
- --nd	: disable descrambling (STD-B25)
+ --b25	: enable descrambling (STD-B25)
  --tsid	: TS ID (BS/CS)
 
 

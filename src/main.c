@@ -189,7 +189,7 @@ channel_detected:
 		ret = 70;	goto end4;
 	}else{
 		struct OutputBuffer * const  pFileBufferedWriter = pOutputBuffer;
-		j = (args.flags & 0x1000)? 0 : 1 ;
+		j = (args.flags & 0x1000)? 1 : 0;
 		pOutputBuffer = create_TSParser( 8192, pFileBufferedWriter, j );
 		if(! pOutputBuffer ) {
 			warn_msg(0,"failed to init TS Parser.");
