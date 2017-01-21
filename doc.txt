@@ -1,0 +1,78 @@
+# recfsusb2n   for Linux OSes
+instructions, usage, FAQ
+2016-02-11
+
+
+# Setup device configuration
+
+Create "video" group (if necessary)
+  # groupadd video
+
+Add user to "video" group
+  # gpasswd -a foouser video
+
+Create udev rule file
+  # nano /etc/udev/rules.d/91-tuner.rules
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="0511", ATTRS{idProduct}=="0045", MODE="0664", GROUP="video"
+
+If the above rule doesn't work,
+
+BUS=="usb", SYSFS{idVendor}=="0511", SYSFS{idProduct}=="0045", MODE="0664", GROUP="video"
+
+
+Apply "udev.rules" changes
+  # udevadm control --reload
+(possibly "--reload-rules")
+
+
+
+# usage "recfsusb2n"
+
+recfsusb2i [-v] CHANNEL RECSEC DESTFILE
+
+CHANNEL   : (int) 13-62 = UHF ch., 101- = BS ch., 201- = CS ch., 60000- = kHz
+RECSEC    : (int) record duration (second)   "-", 0, or negative number = non-stop (until SIGTERM, Ctrl + c)
+DESTFILE  : TS output file,  "-" = stdout
+
+Options:
+  -v	: verbose (init message, signal status)
+ --nd	: disable descrambling (STD-B25)
+ --tsid	: TS ID (BS/CS)
+
+
+
+# Frequently Asked Questions
+
+
+## Not found "/dev/bus/usb" USBDEVFS directory
+
+In old Linux systems, "/proc/bus/usb" is USBFS directory.
+Please change BASE_DIR_UDEV in "src/usbdevfile.c"
+See description of CONFIG_USB_DEVICEFS
+
+
+
+## How to use libarib25 (STD-B25 interface library) ?
+
+You can get libarib25 (linux ver.) from GitHub or anywhere.
+Make a shared library file. Put the following files in "/usr/local/*"
+
+/usr/local/lib/
+	libarib25.so
+/usr/local/include/arib25/
+	arib_std_b25.h
+	b_cas_card.h
+	portable.h
+
+When build "recfsusb2n", add the option "B25=1"
+  $ make B25=1
+
+
+
+## Not found "linux/usb/ch9.h" header file
+
+Find "linux/usb_ch9.h"
+
+
+
+#End

@@ -1,0 +1,44 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+# ChangeLog  recfsusb2n
+
+0.1.12	2016-02-11
+	first release
+	modified and simplified CNR calc function  [tc90522.c]
+	For stability, increased waiting time for tuning.  [main.c]
+	Added: TMCC data  [tc90522.c]
+
+
+0.1.0	2016-02-05
+	Added: check transfer mode  [tsthread.c]
+
+
+0.0.71	2016-01-18
+	Added: set TSID for BS/CS
+	Added: ISDB-T Tuner function is implemented.
+
+
+0.0.34	2016-01-14
+	recfsusb2n preview ver.
+
+
+0.0.5	2016-01-13
+	unit test
+	Only BS/CS Tuner function is implemented.
+
+
+
+## End
+signed by "trinity19683.gpg-pub" 2015-12-13
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQEcBAEBCAAGBQJWu7FHAAoJEB0tpC02lUUY3ykIAIpQSKE9UayXJrnNbFEXIlkK
+kZijPJOirL1Or0iykkX+M9y1jJEgOE8v1udc/hZoxZ0kheMHNHI4bN3974AOcGzd
+F4qOhlf+1oXo04yWOky8ByD7jQoEUV/OS6gNiSNmP8zj5mxPDHlCqHMYbE2XAiLE
++N6RYE+NtQtSg+pF4inBQQdeCnK++LZE3UP8Gi5+5eVaHnzxe9vIOF9/372e3RGk
+bPMlQ+ZgCzajNUfSazhZsbU96c8Wn/KJ8wHE/VKciZLN8+SciSfq/0p5N39jZSoe
+oip9VfNt139oxcHj847gnULPNhvJrGrZUojvI4JgJSVusc06KeZ3NpYX6jJUgTY=
+=sMFj
+-----END PGP SIGNATURE-----
