@@ -31,6 +31,7 @@ Apply "udev.rules" changes
 recfsusb2n [-v] [--b25] [--tsid n] [--sid n1,n2,...] channel recsec destfile
 
 channel   : (int) 13-62 = UHF ch., 101- = BS ch., 201- = CS ch., 60000- = kHz
+          : BSnn_n, CSnn_n (refer to channel.h)
 recsec    : (int) record duration (second)   "-", 0, or negative number = non-stop (until SIGTERM, Ctrl + c)
 destfile  : TS output file,  "-" = stdout
 

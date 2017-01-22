@@ -16,6 +16,7 @@
 
 #include "decoder.h"
 #include "tssplitter_lite.h"
+#include "channel.h"
 
 struct Args* args;
 splitter* sp;
@@ -25,7 +26,7 @@ int split_select_finish;
 static void usage(const char *argv0)
 {
 	msg("Usage: %s", argv0);
-	msg(" [-v]");
+	msg(" [-v] [--dev devfile]");
 #ifdef STD_B25
 	msg(" [--b25]");
 #endif
@@ -42,25 +43,34 @@ void parseOption(int argc, char * const argv[], struct Args* p_args)
 	for(;;) {
 		int option_index = 0;
 		static struct option long_options[] = {
-			{"dev", required_argument, NULL, 260},
-			{"tsid", required_argument, NULL, 300},
-			{"sid", required_argument, NULL, 400},
+			{"dev",		required_argument,	NULL, 'd'},
 #ifdef STD_B25
-			{"b25", no_argument, NULL, 500},
+			{"b25",		no_argument, 		NULL, 'b'},
+			{"B25",		no_argument, 		NULL, 'b'},
 #endif
-			{0, 0, 0, 0}
+			{"tsid",	required_argument,	NULL, 't'},
+			{"sid",		required_argument,	NULL, 's'},
+			{0, 0, NULL, 0} /* terminate */
 		};
-		c = getopt_long(argc, argv, "v", long_options, &option_index);
+		c = getopt_long(argc, argv, "hv", long_options, &option_index);
 		if(0 > c) break;
 		switch( c ) {
+		case 'h':   //# usage
+			usage(argv[0]);
+			break;
 		case 'v':   //# verbose
 			args->flags |= 0x1;
 			break;
-		case 260:   //# specify devfile (usbdevfs)
+		case 'd':   //# specify devfile (usbdevfs)
 			if( optarg )
 				args->devfile = strdup(optarg);
 			break;
-		case 300:   //# TS ID
+#ifdef STD_B25
+		case 'b':   //# enable descrambling (STD-B25)
+			args->flags |= 0x1000;
+			break;
+#endif
+		case 't':   //# TS ID
 			if( optarg ) {
 				c = atoi(optarg);
 				if(0xFFFF > c && 0 <= c) {
@@ -68,17 +78,12 @@ void parseOption(int argc, char * const argv[], struct Args* p_args)
 				}
 			}
 			break;
-		case 400:   //# SID
+		case 's':   //# service ID
 			if( optarg ) {
 				args->splitter = 1;
 				strncpy( args->sid_list, optarg, 31);
 			}
 			break;
-#ifdef STD_B25
-		case 500:   //# enable descrambling (STD-B25)
-			args->flags |= 0x1000;
-			break;
-#endif
 		}
 	}
 
@@ -86,7 +91,14 @@ void parseOption(int argc, char * const argv[], struct Args* p_args)
 		usage(argv[0]);
 	}
 	ptr = argv[optind++];
-	c = atoi(ptr);
+	c = channel_conv(ptr);
+	if (c > 0) {
+		args->ts_id = channel_table[c].tsid;
+		args->splitter = 1;
+		sprintf( args->sid_list, "%d", channel_table[c].sid);
+		c = channel_table[c].freq;
+	}else
+		c = atoi(ptr);
 	if(13 <= c && c <= 62) {
 		//# UHF (13, 14, .., 62)
 		args->freq = (c -  13) *  6000 +  473143;
@@ -498,6 +510,17 @@ struct OutputBuffer* create_TSParser(unsigned  bufSize, struct OutputBuffer* con
 		}
 	}
 	return pThis;
+}
+
+int channel_conv(char* channel)
+{
+	int i = 0;
+	while(channel_table[i].freq != 0) {
+		if(strcmp(channel, channel_table[i].channel) == 0)
+			return i;
+		i++;
+	}
+	return 0;
 }
 
 /*EOF*/
