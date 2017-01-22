@@ -375,11 +375,11 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 			ubuf.size = length;
 			ubuf.data = ptr;
 
-			/* •ª—£‘ÎÛPID‚Ì’Šo */
+			/* åˆ†é›¢å¯¾è±¡PIDã®æŠ½å‡º */
 			if(split_select_finish != TSS_SUCCESS) {
 				split_select_finish = split_select(sp, &ubuf);
 				if(split_select_finish == TSS_NULL) {
-					/* mallocƒGƒ‰[”­¶ */
+					/* mallocã‚¨ãƒ©ãƒ¼ç™ºç”Ÿ */
 					warn_msg(0,"split_select malloc failed");
 					args->splitter = 0;
 					length = ubuf.size;
@@ -394,7 +394,7 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 					goto fin;
 				}
 			}
-			// •ª—£‘ÎÛˆÈŠO‚ğ‚Ó‚é‚¢—‚Æ‚·
+			// åˆ†é›¢å¯¾è±¡ä»¥å¤–ã‚’ãµã‚‹ã„è½ã¨ã™
 			code = split_ts(sp, &ubuf, &splitbuf);
 			if(code == TSS_NULL) {
 				msg("PMT reading..");
