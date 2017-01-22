@@ -94,8 +94,6 @@ void parseOption(int argc, char * const argv[], struct Args* p_args)
 	c = channel_conv(ptr);
 	if (c > 0) {
 		args->ts_id = channel_table[c].tsid;
-		args->splitter = 1;
-		sprintf( args->sid_list, "%d", channel_table[c].sid);
 		c = channel_table[c].freq;
 	}else
 		c = atoi(ptr);
