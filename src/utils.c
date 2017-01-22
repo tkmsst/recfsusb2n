@@ -20,6 +20,7 @@
 
 struct Args* args;
 splitter* sp;
+splitbuf_t splitbuf;
 
 static void usage(const char *argv0)
 {
@@ -297,6 +298,10 @@ static int TSParser_release(struct OutputBuffer* const  pThis)
 	if( prv->b25cas )
 		prv->b25cas->release( prv->b25cas );
 #endif
+	if( splitbuf.buffer ) {
+		free(splitbuf.buffer);
+		splitbuf.buffer = NULL;
+	}
 	if( sp )
 		split_shutdown(sp);
 	return 0;
@@ -357,12 +362,8 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 #endif
 
 		if (args->splitter) {
-			static splitbuf_t splitbuf;
 			ARIB_STD_B25_BUFFER	buf;
 			int split_select_finish = TSS_ERROR;
-
-			splitbuf.buffer_size = 0;
-			splitbuf.buffer = NULL;
 			splitbuf.buffer_filled = 0;
 
 			/* allocate split buffer */
@@ -373,6 +374,7 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 					args->splitter = FALSE;
 					goto fin;
 				}
+				splitbuf.buffer_size = length;
 			}
 
 			buf.size = length;
@@ -411,11 +413,7 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 			length = splitbuf.buffer_filled;
 			ptr = splitbuf.buffer;
 		fin:
-			if(splitbuf.buffer) {
-				free(splitbuf.buffer);
-				splitbuf.buffer = NULL;
-				splitbuf.buffer_size = 0;
-			}
+			;
 		} /* if */
 
 		r = OutputBuffer_put(pThis->pOutput, ptr, length);
@@ -517,6 +515,8 @@ struct OutputBuffer* create_TSParser(unsigned  bufSize, struct OutputBuffer* con
 			warn_msg(0,"Cannot start TS splitter");
 		}
 	}
+	splitbuf.buffer = NULL;
+	splitbuf.buffer_size = 0;
 	return pThis;
 }
 
