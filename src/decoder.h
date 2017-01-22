@@ -5,9 +5,6 @@
 #include "./aribb25/arib_std_b25.h"
 #include "./aribb25/b_cas_card.h"
 
-#define TRUE	1
-#define FALSE	0
-
 typedef struct Decoder {
     ARIB_STD_B25 *b25;
     B_CAS_CARD *bcas;

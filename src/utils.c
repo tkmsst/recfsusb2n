@@ -20,8 +20,6 @@
 
 struct Args* args;
 splitter* sp;
-splitbuf_t splitbuf;
-int split_select_finish;
 
 static void usage(const char *argv0)
 {
@@ -80,7 +78,7 @@ void parseOption(int argc, char * const argv[], struct Args* p_args)
 			break;
 		case 's':   //# service ID
 			if( optarg ) {
-				args->splitter = 1;
+				args->splitter = TRUE;
 				strncpy( args->sid_list, optarg, 31);
 			}
 			break;
@@ -299,8 +297,6 @@ static int TSParser_release(struct OutputBuffer* const  pThis)
 	if( prv->b25cas )
 		prv->b25cas->release( prv->b25cas );
 #endif
-	if( splitbuf.buffer )
-		free( splitbuf.buffer );
 	if( sp )
 		split_shutdown(sp);
 	return 0;
@@ -359,52 +355,69 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 			}
 		}
 #endif
-		/* Split */
+
 		if (args->splitter) {
-			ARIB_STD_B25_BUFFER	ubuf;
-			int code = TSS_SUCCESS;
+			static splitbuf_t splitbuf;
+			ARIB_STD_B25_BUFFER	buf;
+			int split_select_finish = TSS_ERROR;
 
-			splitbuf.size = 0;
-			if( splitbuf.allocation_size < length ){
-				free( splitbuf.buffer );
-				splitbuf.buffer = (u_char *)malloc( length );
-				splitbuf.allocation_size = length;
-			}
-			ubuf.size = length;
-			ubuf.data = ptr;
+			splitbuf.buffer_size = 0;
+			splitbuf.buffer = NULL;
+			splitbuf.buffer_filled = 0;
 
-			/* 分離対象PIDの抽出 */
-			if(split_select_finish != TSS_SUCCESS) {
-				split_select_finish = split_select(sp, &ubuf);
-				if(split_select_finish == TSS_NULL) {
-					/* mallocエラー発生 */
-					warn_msg(0,"split_select malloc failed");
-					args->splitter = 0;
-					length = ubuf.size;
-					ptr = ubuf.data;
-					free( splitbuf.buffer );
-					splitbuf.buffer = NULL;
-					split_shutdown(sp);
-					goto fin;
-				}
-				else if(split_select_finish != TSS_SUCCESS) {
-					ubuf.size = 0;
+			/* allocate split buffer */
+			if( splitbuf.buffer_size < length && length > 0){
+				splitbuf.buffer = realloc(splitbuf.buffer, length);
+				if(splitbuf.buffer == NULL) {
+					warn_msg(0,"split buffer allocation failed");
+					args->splitter = FALSE;
 					goto fin;
 				}
 			}
-			// 分離対象以外をふるい落とす
-			code = split_ts(sp, &ubuf, &splitbuf);
-			if(code == TSS_NULL) {
-				msg("PMT reading..");
-			}
-			else if(code != TSS_SUCCESS) {
-				warn_msg(0,"split_ts failed");
-			}
 
-			length = splitbuf.size;
+			buf.size = length;
+			buf.data = ptr;
+			while(length) {
+				/* 分離対象PIDの抽出 */
+				if(split_select_finish != TSS_SUCCESS) {
+					split_select_finish = split_select(sp, &buf);
+					if(split_select_finish == TSS_NULL) {
+						/* mallocエラー発生 */
+						warn_msg(0,"split_select malloc failed");
+						args->splitter = FALSE;
+						goto fin;
+					}
+					else if(split_select_finish != TSS_SUCCESS) {
+						/* 分離対象PIDが完全に抽出できるまで出力しない
+						 * 1秒程度余裕を見るといいかも
+						 */
+						break;
+					}
+				}
+
+				// 分離対象以外をふるい落とす
+				r = split_ts(sp, &buf, &splitbuf);
+				if(r == TSS_NULL) {
+					msg("PMT reading..");
+				}
+				else if(r != TSS_SUCCESS) {
+					warn_msg(0,"split_ts failed");
+					break;
+				}
+
+				break;
+			} /* while */
+
+			length = splitbuf.buffer_filled;
 			ptr = splitbuf.buffer;
-fin:;
-		}
+		fin:
+			if(splitbuf.buffer) {
+				free(splitbuf.buffer);
+				splitbuf.buffer = NULL;
+				splitbuf.buffer_size = 0;
+			}
+		} /* if */
+
 		r = OutputBuffer_put(pThis->pOutput, ptr, length);
 		if(0 > r)  return r;
 	}
@@ -495,16 +508,13 @@ struct OutputBuffer* create_TSParser(unsigned  bufSize, struct OutputBuffer* con
 		prv->b25cas = NULL;
 	}
 #endif
+
 	/* initialize splitter */
 	if(args->splitter) {
 		sp = split_startup(args->sid_list);
-		if(sp != NULL) {
-			splitbuf.buffer = (u_char *)malloc( LENGTH_SPLIT_BUFFER );
-			splitbuf.allocation_size = LENGTH_SPLIT_BUFFER;
-			split_select_finish = TSS_ERROR;
-		}else{
-			args->splitter = 0;
-			warn_msg(0,"Cannot start TS splitter.");
+		if(!sp) {
+			args->splitter = FALSE;
+			warn_msg(0,"Cannot start TS splitter");
 		}
 	}
 	return pThis;

@@ -27,8 +27,8 @@
 #define MAX_PID				(8192)
 #define MAX_SERVICES		(50)
 #define LENGTH_CRC_DATA		(176)
-#define false				(0)
-#define true				(1)
+#define FALSE				(0)
+#define TRUE				(1)
 
 #define TSS_SUCCESS			(0)
 #define TSS_ERROR			(-1)
@@ -36,18 +36,17 @@
 #define LENGTH_PAT_HEADER	(12)
 #define C_CHAR_COMMA		','
 #define SECTION_CONTINUE	(1)
-#define LENGTH_SPLIT_BUFFER	(3*1024*1024)
 
 typedef struct pmt_version {
   int pid;
   int version;
   int packet;
-} pmt_version_t;
+} pmt_version;
 
 /**
  * splitter構造体
  */
-typedef struct _splitter {
+typedef struct splitter {
 	unsigned char	pids[MAX_PID];
 	unsigned char	pmt_pids[MAX_PID];
 	unsigned char*	pat;
@@ -56,18 +55,17 @@ typedef struct _splitter {
 	int pmt_retain;
 	int pmt_counter;
 	int avail_pmts[MAX_SERVICES];
-	pmt_version_t pmt_version[MAX_SERVICES];
+	pmt_version pmt_version[MAX_SERVICES];
 	int num_pmts;
 	uint16_t section_remain[MAX_PID];	// セクション残りバイト数
 	uint8_t packet_seq[MAX_PID];	// 巡回カウンタ
 } splitter;
 
-/* b25 decoder would hoard up large chank */
 typedef struct _splitbuf_t
 {
-    int size;
-    int allocation_size;
-    u_char *buffer;
+	u_char* buffer;
+	int buffer_size;
+	int buffer_filled;
 } splitbuf_t;
 
 splitter* split_startup(char *sid);
