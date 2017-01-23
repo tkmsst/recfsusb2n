@@ -91,7 +91,7 @@ void parseOption(int argc, char * const argv[], struct Args* p_args)
 	}
 	ptr = argv[optind++];
 	c = channel_conv(ptr);
-	if (c > 0) {
+	if (c >= 0) {
 		args->ts_id = channel_table[c].tsid;
 		c = channel_table[c].freq;
 	}else
@@ -523,12 +523,12 @@ struct OutputBuffer* create_TSParser(unsigned  bufSize, struct OutputBuffer* con
 int channel_conv(char* channel)
 {
 	int i = 0;
-	while(channel_table[i].freq != 0) {
+	while(channel_table[i].freq > 0) {
 		if(strcmp(channel, channel_table[i].channel) == 0)
 			return i;
 		i++;
 	}
-	return 0;
+	return -1;
 }
 
 /*EOF*/
