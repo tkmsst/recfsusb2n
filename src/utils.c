@@ -25,11 +25,11 @@ splitbuf_t splitbuf;
 static void usage(const char *argv0)
 {
 	msg("Usage: %s", argv0);
-	msg(" [-v] [--dev devfile]");
+	msg(" [-v]");
 #ifdef STD_B25
 	msg(" [--b25]");
 #endif
-	msg(" [--tsid n] [--sid n1,n2,...] channel recsec destfile\n");
+	msg(" [--dev devfile] [--tsid n] [--sid n1,n2,...] channel recsec destfile\n");
 	exit(1);
 }
 
@@ -77,7 +77,7 @@ void parseOption(int argc, char * const argv[], struct Args* p_args)
 				}
 			}
 			break;
-		case 's':   //# service ID
+		case 's':   //# Service ID
 			if( optarg ) {
 				args->splitter = TRUE;
 				strncpy( args->sid_list, optarg, 31);
@@ -523,8 +523,11 @@ struct OutputBuffer* create_TSParser(unsigned  bufSize, struct OutputBuffer* con
 int channel_conv(char* channel)
 {
 	int i = 0;
+	char buf[4];
 	while(channel_table[i].freq > 0) {
-		if(strcmp(channel, channel_table[i].channel) == 0)
+		sprintf(buf, "%03d", channel_table[i].sid);
+		if(strcmp(channel, channel_table[i].channel) == 0
+			|| strcmp(channel, buf) == 0)
 			return i;
 		i++;
 	}
