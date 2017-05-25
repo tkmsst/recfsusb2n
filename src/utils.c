@@ -11,12 +11,21 @@
 #include <getopt.h>
 #include <signal.h>
 
+#include "decoder.h"
 #include "utils.h"
 #include "message.h"
-
-#include "decoder.h"
 #include "tssplitter_lite.h"
 #include "channel.h"
+
+#define TS_PACKET_SIZE  188
+
+struct TSParser_Data {
+	unsigned  synced_packet_count;
+#ifdef STD_B25
+	ARIB_STD_B25 *b25;
+	B_CAS_CARD *b25cas;
+#endif
+};
 
 struct Args* args;
 splitter* sp;
@@ -274,21 +283,6 @@ struct OutputBuffer* create_FileBufferedWriter(unsigned  bufSize, const char* co
 	return pThis;
 }
 
-#ifdef STD_B25
-#include <aribb25/arib_std_b25.h>
-#include <aribb25/b_cas_card.h>
-#endif
-
-#define TS_PACKET_SIZE  188
-
-struct TSParser_Data {
-	unsigned  synced_packet_count;
-#ifdef STD_B25
-	ARIB_STD_B25 *b25;
-	B_CAS_CARD *b25cas;
-#endif
-};
-
 static int TSParser_release(struct OutputBuffer* const  pThis)
 {
 #ifdef STD_B25
@@ -343,24 +337,6 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 		}
 	}
 	if(pThis->pOutput) {
-#ifdef STD_B25
-		if( prv->b25 ) {
-			ARIB_STD_B25_BUFFER b25_sbuf;
-			ARIB_STD_B25_BUFFER b25_dbuf;
-			b25_sbuf.data = ptr;
-			b25_sbuf.size = length;
-			if((r = prv->b25->put(prv->b25, &b25_sbuf) ) < 0) {
-				warn_msg(r,"StdB25.put failed");
-			}
-			if((r = prv->b25->get(prv->b25, &b25_dbuf) ) < 0) {
-				warn_msg(r,"StdB25.get failed");
-			}else{
-				ptr = b25_dbuf.data;
-				length = b25_dbuf.size;
-			}
-		}
-#endif
-
 		if (args->splitter) {
 			ARIB_STD_B25_BUFFER	buf;
 			int split_select_finish = TSS_ERROR;
@@ -377,8 +353,8 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 				splitbuf.buffer_size = length;
 			}
 
-			buf.size = length;
 			buf.data = ptr;
+			buf.size = length;
 			while(length) {
 				/* 分離対象PIDの抽出 */
 				if(split_select_finish != TSS_SUCCESS) {
@@ -410,11 +386,29 @@ static int TSParser_process(struct OutputBuffer* const  pThis, void* const buf)
 				break;
 			} /* while */
 
-			length = splitbuf.buffer_filled;
 			ptr = splitbuf.buffer;
+			length = splitbuf.buffer_filled;
 		fin:
 			;
 		} /* if */
+
+#ifdef STD_B25
+		if( prv->b25 ) {
+			ARIB_STD_B25_BUFFER b25_sbuf;
+			ARIB_STD_B25_BUFFER b25_dbuf;
+			b25_sbuf.data = ptr;
+			b25_sbuf.size = length;
+			if((r = prv->b25->put(prv->b25, &b25_sbuf) ) < 0) {
+				warn_msg(r,"StdB25.put failed");
+			}
+			if((r = prv->b25->get(prv->b25, &b25_dbuf) ) < 0) {
+				warn_msg(r,"StdB25.get failed");
+			}else{
+				ptr = b25_dbuf.data;
+				length = b25_dbuf.size;
+			}
+		}
+#endif
 
 		r = OutputBuffer_put(pThis->pOutput, ptr, length);
 		if(0 > r)  return r;
@@ -498,7 +492,9 @@ struct OutputBuffer* create_TSParser(unsigned  bufSize, struct OutputBuffer* con
 	pThis->process = TSParser_process;
 	pThis->release = TSParser_release;
 	prv->synced_packet_count = 1;
+
 #ifdef STD_B25
+	/* initialize decoder */
 	if(mode & 0x1) {
 		init_STD_B25(&( prv->b25 ), &( prv->b25cas ));
 	}else{

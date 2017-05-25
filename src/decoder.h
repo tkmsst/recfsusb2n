@@ -2,29 +2,20 @@
 #ifndef _DECODER_H_
 #define _DECODER_H_
 
-#include "./aribb25/arib_std_b25.h"
-#include "./aribb25/b_cas_card.h"
+#include <stdint.h>
 
-typedef struct Decoder {
-    ARIB_STD_B25 *b25;
-    B_CAS_CARD *bcas;
-} decoder;
+#ifdef STD_B25
 
-typedef struct Decoder_options {
-    int round;
-    int strip;
-    int emm;
-} decoder_options;
+#include <aribb25/arib_std_b25.h>
+#include <aribb25/b_cas_card.h>
 
-/* prototypes */
-extern decoder *b25_startup(decoder_options *);
-extern int b25_shutdown(decoder *);
-extern int b25_decode(decoder *,
-               ARIB_STD_B25_BUFFER *,
-               ARIB_STD_B25_BUFFER *);
-extern int b25_finish(decoder *,
-               ARIB_STD_B25_BUFFER *,
-               ARIB_STD_B25_BUFFER *);
+#else
 
+typedef struct {
+    uint8_t *data;
+    int32_t  size;
+} ARIB_STD_B25_BUFFER;
+
+#endif
 
 #endif
