@@ -530,4 +530,67 @@ int channel_conv(char* channel)
 	return -1;
 }
 
+int set_ch_table(void)
+{
+	FILE *fp;
+	char *p, buf[256];
+	ssize_t len;
+
+	if((len = readlink("/proc/self/exe", buf, sizeof(buf) - 8)) == -1)
+		return 2;
+	buf[len] = '\0';
+	strcat(buf, ".conf");
+
+	fp = fopen(buf, "r");
+	if(fp == NULL) {
+		warn_msg(0,"Cannot open '%s'\n", buf);
+		return -1;
+	}
+
+	int i = 0;
+	len = sizeof(channel_table[0].channel) - 1;
+	while(fgets(buf, sizeof(buf), fp) && i < MAX_CH - 1) {
+		if(buf[0] == ';')
+			continue;
+		p = buf + strlen(buf) - 1;
+		while((p >= buf) && (*p == '\r' || *p == '\n'))
+			*p-- = '\0';
+		if(p < buf)
+			continue;
+
+		int n = 0;
+		char *cp[4];
+		int bOk = FALSE;
+		p = cp[n++] = buf;
+		while(1) {
+			p = strchr(p, '\t');
+			if(p) {
+				*p++ = '\0';
+				cp[n++] = p;
+				if(n > 3) {
+					bOk = TRUE;
+					break;
+				}
+			}else
+				break;
+		}
+		if(bOk) {
+			strncpy(channel_table[i].channel, cp[0], len);
+			channel_table[i].channel[len] = '\0';
+			channel_table[i].freq = (int)strtol(cp[1], NULL, 10);
+			channel_table[i].sid = (int)strtol(cp[2], NULL, 10);
+			channel_table[i].tsid = (int)strtol(cp[3], NULL, 0);
+			i++;
+		}
+	}
+
+	fclose(fp);
+	channel_table[i].channel[0] = '\0';
+	channel_table[i].freq = 0;
+	channel_table[i].sid = 0;
+	channel_table[i].tsid = 0;
+
+	return 0;
+}
+
 /*EOF*/

@@ -39,6 +39,7 @@ int OutputBuffer_put(struct OutputBuffer* const, void *buf, unsigned length);
 int OutputBuffer_flush(struct OutputBuffer* const);
 struct OutputBuffer* create_FileBufferedWriter(unsigned  bufSize, const char* const);
 struct OutputBuffer* create_TSParser(unsigned  bufSize, struct OutputBuffer* const  pOutput, const unsigned  mode);
+int set_ch_table(void);
 
 
 /*EOF*/

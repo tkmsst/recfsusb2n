@@ -52,6 +52,9 @@ int main(int argc, char **argv)
 	void  *pDemod = NULL, *pTuner[2];
 	struct i2c_device_st* pI2C;
 
+	if(set_ch_table() < 0)
+		return 1;
+
 	msg("recfsusb2n " PRG_VER " " PRG_BUILT " " PRG_TIMESTAMP ", (GPL) 2016 trinity19683\n");
 	parseOption(argc, argv, &args);
 

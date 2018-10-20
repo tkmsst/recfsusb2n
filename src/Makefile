@@ -3,6 +3,7 @@ CFLAGS	= -O2 -Wall
 OBJS	= main.o utils.o message.o osdepend.o usbdevfile.o usbops.o tsthread.o em287x.o em287x_usb.o tc90522.o mxl136.o tda20142.o tssplitter_lite.o
 LIBS	= -lpthread
 TARGET	= recfsusb2n
+CONF = $(TARGET).conf
 PREFIX = /usr/local
 
 ifdef B25
@@ -20,9 +21,10 @@ clean:
 
 uninstall:
 	rm -vf $(PREFIX)/bin/$(TARGET)
+	rm -vf $(PREFIX)/bin/$(CONF)
 
 install: uninstall
-	install -m 755 $(TARGET) $(PREFIX)/bin
+	install -m 755 $(TARGET) $(CONF) $(PREFIX)/bin
 
 $(TARGET): $(OBJS)
 	$(CC) -o $(TARGET) $(OBJS) $(LIBS)
